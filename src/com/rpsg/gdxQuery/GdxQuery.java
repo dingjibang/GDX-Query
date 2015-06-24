@@ -16,7 +16,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 public class GdxQuery {
 
 	private List<Actor> values = new LinkedList<Actor>();
-	private Runnable click;
+	private Runnable click,dblClick;
+	private int dblDelay=0,dblDelayMax=30;
 	
 	InputListener clickListener=(new InputListener(){
 		public void touchUp (InputEvent event, float x, float y, int pointer, int b) {
@@ -27,9 +28,25 @@ public class GdxQuery {
 			return true;
 		}
 	});
+	
+	InputListener dblClickListener=(new InputListener(){
+		public void touchUp (InputEvent event, float x, float y, int pointer, int b) {
+			if(dblClick!=null)
+				dblClick.run();
+		}
+		public boolean touchDown (InputEvent event, float x, float y, int pointer, int b) {
+			return true;
+		}
+	});
 
 	public GdxQuery(Object... a) {
 			add(a);
+	}
+
+	public GdxQuery setOrigin (int alignment){
+		for(Actor actor:getItems())
+			actor.setOrigin(alignment);
+		return this;
 	}
 	
 	public GdxQuery parent(){
@@ -91,6 +108,18 @@ public class GdxQuery {
 			actor.setScaleY(scaleY);
 		return this;
 	}
+
+	public GdxQuery setY(float y){
+		for(Actor actor:getItems())
+			actor.setY(y);
+		return this;
+	}
+
+	public GdxQuery setX(float x){
+		for(Actor actor:getItems())
+			actor.setX(x);
+		return this;
+	}
 	
 	public float getWidth(){
 		return getItem().getWidth();
@@ -101,12 +130,14 @@ public class GdxQuery {
 	}
 	
 	public GdxQuery setWidth(float width){
-		getItem().setWidth(width);
+		for(Actor actor:getItems())
+			actor.setWidth(width);
 		return this;
 	}
 	
 	public GdxQuery setHeight(float height){
-		getItem().setHeight(height);
+		for(Actor actor:getItems())
+			actor.setHeight(height);
 		return this;
 	}
 	
@@ -355,10 +386,9 @@ public class GdxQuery {
 	
 	public GdxQuery onClick(Runnable run){
 		this.click=run;
-		for(Actor actor:getItems()){
+		for(Actor actor:getItems())
 			if(!actor.getListeners().contains(clickListener, true))
 				actor.addListener(clickListener);
-		}
 		return this;
 	}
 	
