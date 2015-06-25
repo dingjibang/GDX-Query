@@ -1,6 +1,7 @@
 # Get Start (我该咋用)
 1. [Download Last Releases(下载jar包)](https://github.com/dingjibang/GDX-Query/releases/latest)
 2. [read demos(读一读示例程序)](https://github.com/dingjibang/GDX-Query/tree/master/src/demo)
+3. [read Wiki(for chinese only)(读一下wiki)](https://github.com/dingjibang/GDX-Query/wiki)
 
 # What's this?(这个项目是什么)
 
@@ -24,5 +25,5 @@ GDX-Query项目应此而生，它可以简化你的代码，从而让你全身�
 
     $.image("your texture file path").setPosition(30,50).setColor(1,1,1,0).appendTo(stage);
   
-It's funny? Wiki page will be create recently, now you can read demos.<br>
-是不是很爽？近期我会做一个文档，在这之前先读读demo对付一下吧~
+It's funny? 
+是不是很爽？
