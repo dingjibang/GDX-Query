@@ -4,11 +4,13 @@ import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.rpsg.gdxQuery.$;
 import com.rpsg.gdxQuery.GdxQuery;
+import com.rpsg.gdxQuery.GdxQueryRunnable;
 
 public class SimpleGdxQueryDemo implements ApplicationListener, InputProcessor {
 	public static void main(String[] args) {
@@ -20,28 +22,34 @@ public class SimpleGdxQueryDemo implements ApplicationListener, InputProcessor {
 	public void create() {
 		stage=new Stage();
 		
-		//ÒÔÎÒÃÇÕı³£µÄ·½Ê½£¬´´½¨Ò»¸öActor¶ÔÏó£¬È»ºó½øĞĞÅäÖÃ£¬×îºó·ÅÈëstageÀï¡£
-		//in the normal way to create a actor and add it to stage.
-		Image image=new Image(new Texture(Gdx.files.internal("resource/data/badlogic.jpg")));
-		image.setPosition(50, 60);
-		image.setColor(1,1,0.3f,0.5f);
-		stage.addActor(image);
+//		//ä»¥æˆ‘ä»¬æ­£å¸¸çš„æ–¹å¼ï¼Œåˆ›å»ºä¸€ä¸ªActorå¯¹è±¡ï¼Œç„¶åè¿›è¡Œé…ç½®ï¼Œæœ€åæ”¾å…¥stageé‡Œã€‚
+//		//in the normal way to create a actor and add it to stage.
+//		Image image=new Image(new Texture(Gdx.files.internal("resource/data/badlogic.jpg")));
+//		image.setPosition(50, 60);
+//		image.setColor(1,1,0.3f,0.5f);
+//		stage.addActor(image);
+//		
+//		//ç°åœ¨æˆ‘ä»¬ç”¨GdxQueryæ¨¡å¼ï¼Œåˆ›å»ºä¸€ä¸ªGdxQueryå¯¹è±¡ï¼Œå¹¶ä½¿ç”¨å®ƒã€‚
+//		//now ,use GdxQuery to create a Actor and add to stage
+//		stage.addActor($.add(new Image(new Texture(Gdx.files.internal("resource/data/badlogic.jpg")))).setPosition(150, 160).setColor(1,0.3f,1f,0.5f).getItem());
+//		
+//		//è¿˜å¯ä»¥ç®€åŒ–!
+//		//more simplified!
+//		GdxQuery q=$.image("resource/data/badlogic.jpg").setPosition(300, 300).appendTo(stage);
+//		
+//		//æ‰€æœ‰çš„queryå¯¹è±¡ä½ éƒ½å¯ä»¥è°ƒç”¨ä¸€ä¸ªå«onClickçš„æ–¹æ³•ï¼Œä¼ å…¥ä¸€ä¸ªrunnableï¼Œå½“è¿™ä¸ªå¯¹è±¡è¢«å•å‡»çš„æ—¶å€™ï¼Œå°†ä¼šæ‰§è¡Œrunnableã€‚
+//		//any Query Object allow to use "onClick" method to give a click callback.
+//		q.onClick(new Runnable() {
+//			public void run() {
+//				System.out.println("image was clicked!");
+//			}
+//		});
 		
-		//ÏÖÔÚÎÒÃÇÓÃGdxQueryÄ£Ê½£¬´´½¨Ò»¸öGdxQuery¶ÔÏó£¬²¢Ê¹ÓÃËü¡£
-		//now ,use GdxQuery to create a Actor and add to stage
-		stage.addActor($.add(new Image(new Texture(Gdx.files.internal("resource/data/badlogic.jpg")))).setPosition(150, 160).setColor(1,0.3f,1f,0.5f).getItem());
-		
-		//»¹¿ÉÒÔ¼ò»¯!
-		//more simplified!
-		GdxQuery q=$.image("resource/data/badlogic.jpg").setPosition(300, 300).appendTo(stage);
-		
-		//ËùÓĞµÄquery¶ÔÏóÄã¶¼¿ÉÒÔµ÷ÓÃÒ»¸ö½ĞonClickµÄ·½·¨£¬´«ÈëÒ»¸örunnable£¬µ±Õâ¸ö¶ÔÏó±»µ¥»÷µÄÊ±ºò£¬½«»áÖ´ĞĞrunnable¡£
-		//any Query Object allow to use "onClick" method to give a click callback.
-		q.onClick(new Runnable() {
-			public void run() {
-				System.out.println("image was clicked!");
+		$.add($.image("resource/data/badlogic.jpg"),$.image("resource/data/badlogic.jpg")).first().setColor(Color.RED).setPosition(50, 50).next().setColor(Color.GREEN).setPosition(200, 200).getFather().run(new GdxQueryRunnable() {
+			public void run(GdxQuery self) {
+				self.not(self.first());
 			}
-		});
+		}).appendTo(stage);
 	}
 	
 	public void render() {

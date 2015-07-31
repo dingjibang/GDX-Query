@@ -12,19 +12,32 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+/**
+ * GDX-Query 
+ * more simplified way to enjoy LibGDX
+ * 
+ * Project website: https://github.com/dingjibang/GDX-Query/
+ * RPSG-TEAM: http://www.rpsg-team.com
+ * 
+ * @author dingjibang
+ *
+ */
 public class GdxQuery {
 
-	private List<Actor> values = new LinkedList<Actor>();
+	private LinkedList<Actor> values = new LinkedList<Actor>();
 	
-	private Runnable click;
+	private Runnable click,touchUp,touchDown;
+	
+	private GdxQuery father;
 	
 	private InputListener clickListener=(new InputListener(){
 		public void touchUp (InputEvent event, float x, float y, int pointer, int b) {
-			if(click!=null)
-				click.run();
+			if(click!=null) click.run();
+			if(touchUp!=null) touchUp.run();
 		}
 		public boolean touchDown (InputEvent event, float x, float y, int pointer, int b) {
+			if(touchDown!=null) touchDown.run();
 			return true;
 		}
 	});
@@ -34,11 +47,35 @@ public class GdxQuery {
 	}
 	
 	public GdxQuery first(){
-		return $.add(values.size()==0?new NullActor():values.get(0));
+		return $.add(values.size()==0?new NullActor():values.get(0)).setFather(father==null?this:father);
 	}
 	
 	public GdxQuery last(){
-		return $.add(values.size()==0?new NullActor():values.get(values.size()-1));
+		return $.add(values.size()==0?new NullActor():values.get(values.size()-1)).setFather(father==null?this:father);
+	}
+	
+	public GdxQuery getFather(){
+		return father;
+	}
+	
+	public GdxQuery next(){
+		if(father==null)
+			return $.add();
+		try {
+			return $.add(father.getItems().get(father.getItems().indexOf(getItem())+1)).setFather(father);
+		} catch (Exception e) {
+			return $.add();
+		}
+	}
+	
+	public GdxQuery prev(){
+		if(father==null)
+			return $.add();
+		try {
+			return $.add(father.getItems().get(father.getItems().indexOf(getItem())-1)).setFather(father);
+		} catch (Exception e) {
+			return $.add();
+		}
 	}
 
 	public GdxQuery setOrigin (int alignment){
@@ -66,13 +103,20 @@ public class GdxQuery {
 			return getItems().get(index);
 	}
 	
-	public GdxQuery find(@SuppressWarnings("unchecked") Class<? extends Actor>... cls){
+	public GdxQuery find( Class<? extends Actor>... cls){
 		GdxQuery query=$.add();
 		for(Class<? extends Actor> c:cls)
 			for(Actor actor:getItems())
 				if(actor.getClass().equals(c) || actor.getClass().getSuperclass().equals(c))
 					query.add(actor);
 		return query;
+	}
+	
+	public GdxQuery find(Object userObject){
+		for(Actor actor:getItems())
+			if(actor.getUserObject()!=null && actor.getUserObject().equals(userObject))
+				return $.add(actor);
+		return $.add();
 	}
 	
 	public GdxQuery remove(Object... o){
@@ -83,9 +127,22 @@ public class GdxQuery {
 		return this;
 	}
 	
+	public GdxQuery removeAll(){
+		for(Actor actor:getItems())
+			actor.remove();
+		return this;
+	}
+	
 	public GdxQuery setSize(float width,float height){
 		for(Actor actor:getItems())
 			actor.setSize(width, height);
+		return this;
+	}
+	
+	public GdxQuery invalidate(){
+		for(Actor actor:getItems())
+			if(actor instanceof Widget)
+				((Widget) actor).invalidate();
 		return this;
 	}
 	
@@ -205,11 +262,29 @@ public class GdxQuery {
 		return this;
 	}
 	
+	public GdxQuery each(ActorRunnable run){
+		if(run!=null)
+			for(Actor actor:getItems())
+				run.run(actor);
+		return this;
+	}
+	
 	public GdxQuery addAction(Action... action){
+//		FIXME this method is not work!
 		for(Actor actor:getItems())
 			for(Action act:action)
 				actor.addAction(act);
 		return this;
+	}
+	
+	public GdxQuery setUserObject(Object object){
+		for(Actor actor:getItems())
+			actor.setUserObject(object);
+		return this;
+	}
+	
+	public Object getUserObject(){
+		return getItem().getUserObject();
 	}
 	
 	public GdxQuery cleanActions(){
@@ -263,6 +338,13 @@ public class GdxQuery {
 		return this;
 	}
 	
+	public GdxQuery pack(){
+		for(Actor actor:getItems())
+			if(actor instanceof Widget)
+				((Widget)actor).pack();
+		return this;
+	}
+	
 	public GdxQuery fire(Event event){
 		for(Actor actor:getItems())
 			actor.fire(event);
@@ -276,12 +358,12 @@ public class GdxQuery {
 		return null;
 	}
 	
-	public String text() {
+	public String getText() {
 		Actor actor = getItem();
 		return actor instanceof Label ? ((Label) actor).getText().toString() : (actor.getName()==null?actor.toString(): actor.getName());
 	}
 	
-	public GdxQuery text(String txt) {
+	public GdxQuery setText(String txt) {
 		for (Actor actor : getItems()) 
 			if (actor instanceof Label)
 				((Label) actor).setText(txt);
@@ -301,6 +383,14 @@ public class GdxQuery {
 				getItems().addAll((Collection<? extends Actor>) ((Stage)obj).getActors());
 			else if(obj instanceof GdxQuery)
 				getItems().addAll(((GdxQuery)obj).getItems());
+			else if(obj instanceof Collection)
+				for(Object col:(Collection)obj)
+					add(col);
+		return this;
+	}
+	
+	private GdxQuery setFather(GdxQuery query){
+		this.father=query;
 		return this;
 	}
 	
@@ -308,10 +398,20 @@ public class GdxQuery {
 		return add(a);
 	}
 	
-	public GdxQuery not(Object... a){
-		for(Object o:a)
-			getItems().remove($.add(o).getItem());
-		return this;
+	public GdxQuery not( Class... cls){
+		GdxQuery query=$.add();
+		for(Class<? extends Actor> c:cls)
+			for(Actor actor:getItems())
+				if(!(actor.getClass().equals(c) || actor.getClass().getSuperclass().equals(c)))
+					query.add(actor);
+		return query;
+	}
+	
+	public GdxQuery not(Object userObject){
+		for(Actor actor:getItems())
+			if(!(actor.getUserObject()!=null && actor.getUserObject().equals(userObject)))
+				return $.add(actor);
+		return $.add();
 	}
 	
 	public boolean equals(Actor a){
@@ -335,13 +435,23 @@ public class GdxQuery {
 			if(o instanceof Stage)
 				for(Actor a:getItems())
 					((Stage)o).addActor(a);
-			if(o instanceof Group)
+			else if(o instanceof ScrollPane)
+					((ScrollPane)o).setWidget(getItem());
+			else if(o instanceof Table)
+				for(Actor a:getItems())
+					((Table)o).add(a).fill().row().prefSize(a.getWidth(),a.getHeight());
+			else if(o instanceof Group)
 				for(Actor a:getItems())
 					((Group)o).addActor(a);
-			if(o instanceof Table)
-				for(Actor a:getItems())
-					((Table)o).add(a).row();
+			
 		}
+		return this;
+	}
+	
+	public GdxQuery setBackground(Drawable draw){
+		for(Actor a:getItems())
+			if(a instanceof Table)
+				((Table)a).setBackground(draw);
 		return this;
 	}
 	
@@ -359,7 +469,7 @@ public class GdxQuery {
 				query.add(((Table)actor).getChildren());
 			}
 		}
-		return query;
+		return query.setFather(this);
 	}
 
 	public Actor getItem() {
@@ -368,7 +478,7 @@ public class GdxQuery {
 		return values.get(0);
 	}
 
-	private boolean isEmpty() {
+	public boolean isEmpty() {
 		return values.isEmpty();
 	}
 
@@ -382,17 +492,77 @@ public class GdxQuery {
 		return copy;
 	}
 	
-	public GdxQuery onClick(Runnable run){
-		this.click=run;
+	private GdxQuery tryRegListener() {
 		for(Actor actor:getItems())
 			if(!actor.getListeners().contains(clickListener, true))
 				actor.addListener(clickListener);
 		return this;
 	}
 	
+	public GdxQuery onClick(Runnable run){
+		this.click=run;
+		return tryRegListener();
+	}
+	
 	public GdxQuery click(){
 		click.run();
 		return this;
+	}
+	
+	public GdxQuery onTouchUp(Runnable run){
+		this.touchUp=run;
+		return tryRegListener();
+	}
+	
+	public GdxQuery touchUp(){
+		touchUp.run();
+		return this;
+	}
+	
+	public GdxQuery onTouchDown(Runnable run){
+		this.touchDown=run;
+		return tryRegListener();
+	}
+	
+	public GdxQuery touchDown(){
+		touchDown.run();
+		return this;
+	}
+	
+	public GdxQuery click(boolean sure){
+		if(sure)
+			click.run();
+		return this;
+	}
+	
+	public Cell getCell(){
+		try {
+			if(getItem() instanceof Table)
+				return ((Table)getItem()).getCells().get(0);
+		} catch (Exception e) {
+			return null;
+		}
+		return null;
+	}
+
+	public GdxQuery setChecked(boolean b) {
+		for(Actor actor:getItems())
+			if(actor instanceof Button)
+				((Button)actor).setChecked(b);
+		return this;
+	}
+
+	public GdxQuery setDisabled(boolean b) {
+		for(Actor actor:getItems())
+			if(actor instanceof Button)
+				((Button)actor).setDisabled(b);
+		return this;
+	}
+	
+	public boolean isChecked(){
+		if(getItem() instanceof Button)
+			return ((Button)getItem()).isChecked();
+		return false;
 	}
 
 }
