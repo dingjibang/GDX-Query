@@ -9,9 +9,24 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.*;
+import com.badlogic.gdx.scenes.scene2d.Action;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Event;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
+import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Cell;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.Widget;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 /**
  * GDX-Query 
@@ -33,7 +48,7 @@ public class GdxQuery {
 	
 	private InputListener clickListener=(new InputListener(){
 		public void touchUp (InputEvent event, float x, float y, int pointer, int b) {
-			if(click!=null) click.run();
+			if(click!=null && x>=0 && y>=0 && x <= event.getListenerActor().getWidth() && y <= event.getListenerActor().getHeight()) click.run();
 			if(touchUp!=null) touchUp.run();
 		}
 		public boolean touchDown (InputEvent event, float x, float y, int pointer, int b) {
@@ -103,13 +118,26 @@ public class GdxQuery {
 			return getItems().get(index);
 	}
 	
-	public GdxQuery find( Class<? extends Actor>... cls){
+	public GdxQuery find(Class<?>... cls){
 		GdxQuery query=$.add();
-		for(Class<? extends Actor> c:cls)
+		for(Class<?> c:cls)
 			for(Actor actor:getItems())
 				if(actor.getClass().equals(c) || actor.getClass().getSuperclass().equals(c))
 					query.add(actor);
 		return query;
+	}
+	
+	public GdxQuery findByClass(Class<?>... cls){
+		return find(cls);
+	}
+	
+	public <T> T findAndParse(@SuppressWarnings("unchecked") Class<T>... cls){
+		return find(cls).parse(cls[0]);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T parse(Class<T> clazz){
+		return (T)getItem();
 	}
 	
 	public GdxQuery find(Object userObject){
@@ -220,6 +248,12 @@ public class GdxQuery {
 		return this;
 	}
 	
+	public GdxQuery setAlpha(float a){
+		for(Actor actor:getItems())
+			actor.getColor().a=a;
+		return this;
+	}
+	
 	public GdxQuery setColor(float r,float g,float b,float a){
 		for(Actor actor:getItems())
 			actor.setColor(r,g,b,a);
@@ -280,6 +314,15 @@ public class GdxQuery {
 	public GdxQuery setUserObject(Object object){
 		for(Actor actor:getItems())
 			actor.setUserObject(object);
+		return this;
+	}
+	
+	public GdxQuery setAlign(int align){
+		for(Actor actor:getItems()){
+			if(actor instanceof Label){
+				((Label)actor).setAlignment(align);
+			}
+		}
 		return this;
 	}
 	
@@ -376,15 +419,16 @@ public class GdxQuery {
 				getItems().add((Actor)obj);
 			else if(obj instanceof Cell<?>)
 				getItems().add(((Cell<?>)obj).getActor());
-			else if(obj instanceof ButtonGroup)
-				for(Button button:((ButtonGroup)obj).getButtons())
-					getItems().add(button);
+//			else if(obj instanceof ButtonGroup)
+//				for(Button button:((ButtonGroup)obj).getButtons())
+//					getItems().add(button);
 			else if(obj instanceof Stage)
-				getItems().addAll((Collection<? extends Actor>) ((Stage)obj).getActors());
+				for(Actor actor:((Stage)obj).getActors())
+					getItems().add(actor);
 			else if(obj instanceof GdxQuery)
 				getItems().addAll(((GdxQuery)obj).getItems());
 			else if(obj instanceof Collection)
-				for(Object col:(Collection)obj)
+				for(Object col:(Collection<?>)obj)
 					add(col);
 		return this;
 	}
@@ -398,9 +442,9 @@ public class GdxQuery {
 		return add(a);
 	}
 	
-	public GdxQuery not( Class... cls){
+	public GdxQuery not( Class<?>... cls){
 		GdxQuery query=$.add();
-		for(Class<? extends Actor> c:cls)
+		for(Class<?> c:cls)
 			for(Actor actor:getItems())
 				if(!(actor.getClass().equals(c) || actor.getClass().getSuperclass().equals(c)))
 					query.add(actor);
@@ -439,7 +483,7 @@ public class GdxQuery {
 					((ScrollPane)o).setWidget(getItem());
 			else if(o instanceof Table)
 				for(Actor a:getItems())
-					((Table)o).add(a).fill().row().prefSize(a.getWidth(),a.getHeight());
+					((Table)o).add(a).fill().prefSize(a.getWidth(),a.getHeight()).row();
 			else if(o instanceof Group)
 				for(Actor a:getItems())
 					((Group)o).addActor(a);
@@ -459,7 +503,7 @@ public class GdxQuery {
 		GdxQuery query=new GdxQuery();
 		for(Actor actor:getItems()){
 			if(actor instanceof Group)
-				query.add(((Group)actor).getChildren().items);
+				query.add((Object[])((Group)actor).getChildren().items);
 			if(actor instanceof com.badlogic.gdx.scenes.scene2d.ui.List<?>)
 				query.add(((com.badlogic.gdx.scenes.scene2d.ui.List<?>)actor).getItems());
 			if(actor instanceof SelectBox<?>)
@@ -471,11 +515,22 @@ public class GdxQuery {
 		}
 		return query.setFather(this);
 	}
+	
+	public GdxQuery setTouchable(Touchable able){
+		for(Actor actor:getItems())
+			actor.setTouchable(able);
+		return this;
+	}
 
 	public Actor getItem() {
 		if(isEmpty())
 			return new NullActor();
 		return values.get(0);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getItem(Class<T> c){
+		return (T)getItem();
 	}
 
 	public boolean isEmpty() {
@@ -505,6 +560,7 @@ public class GdxQuery {
 	}
 	
 	public GdxQuery click(){
+		if(click!=null)
 		click.run();
 		return this;
 	}
@@ -535,7 +591,7 @@ public class GdxQuery {
 		return this;
 	}
 	
-	public Cell getCell(){
+	public Cell<?> getCell(){
 		try {
 			if(getItem() instanceof Table)
 				return ((Table)getItem()).getCells().get(0);
