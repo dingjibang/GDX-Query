@@ -3,6 +3,7 @@ package com.rpsg.gdxQuery;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -620,5 +621,23 @@ public class GdxQuery {
 			return ((Button)getItem()).isChecked();
 		return false;
 	}
+
+
+    public GdxQuery on(EventType eventType, Consumer<GdxQuery> func) {
+        GdxQuery handle = this;
+        Runnable runer = new Runnable() {
+            public void run() {
+                func.accept(handle);
+            }
+        };
+        switch(eventType) {
+        case CLICK:     this.onClick(runer);
+                        break;
+        case TOUCHUP:   this.onTouchUp(runer);
+                        break;
+        case TOUCHDOWN: this.onTouchDown(runer);
+        }
+        return this;
+    }
 
 }
