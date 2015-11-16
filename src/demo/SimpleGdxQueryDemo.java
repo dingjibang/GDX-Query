@@ -9,10 +9,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.rpsg.gdxQuery.$;
+import com.rpsg.gdxQuery.EventType;
 import com.rpsg.gdxQuery.GdxQuery;
 import com.rpsg.gdxQuery.GdxQueryRunnable;
+import com.rpsg.gdxQuery.gQuery.IGQuery;
 
-public class SimpleGdxQueryDemo implements ApplicationListener, InputProcessor {
+public class SimpleGdxQueryDemo implements ApplicationListener, InputProcessor, IGQuery{
 	public static void main(String[] args) {
 		new LwjglApplication(new SimpleGdxQueryDemo(),"demo",1024,576);
 	}
@@ -45,10 +47,16 @@ public class SimpleGdxQueryDemo implements ApplicationListener, InputProcessor {
 //			}
 //		});
 		
+		// v0.3 use method
 		$.add($.image("resource/data/badlogic.jpg"),$.image("resource/data/badlogic.jpg")).first().setColor(Color.RED).setPosition(50, 50).next().setColor(Color.GREEN).setPosition(200, 200).getFather().run(new GdxQueryRunnable() {
 			public void run(GdxQuery self) {
 				self.not(self.first());
 			}
+		}).appendTo(stage);
+		
+		//now use lambda, more  js like!!!
+		$("resource/data/badlogic.jpg").on(EventType.CLICK, (query)-> {
+		    System.out.println("hello");
 		}).appendTo(stage);
 	}
 	
